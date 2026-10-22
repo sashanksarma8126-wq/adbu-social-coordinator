@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model CalendarEvent {
+  id              String            @id @default(cuid())
+  title           String
+  description     String
+  date            DateTime
+  startTime       String?
+  endTime         String?
+  location        String?
+  category        String            // Academic Calendar, University Event, Department Event, Workshop / Seminar, Conference, Student Activity, Important University Date, International / National Observance, Admission-related Date, Examination-related Date
+  department      String?
+  organizer       String?
+  source          String?           // Source / reference e.g. Registrar Notice, Academic Council Resolution
+  notes           String?
+  status          String            @default("Planned") // Planned, Confirmed, Completed, Cancelled
+  informationType String            @default("OFFICIAL_ADBU") // OFFICIAL_ADBU, EXTERNAL_OBSERVANCE, AI_SUGGESTION
+  contentItems    ContentItem[]
+  campaigns       ContentCampaign[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model ContentCampaign {
+  id              String         @id @default(cuid())
+  title           String
+  eventId         String?
+  event           CalendarEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  objectives      String         // Stored as JSON or comma-separated
+  platforms       String         // Stored as JSON or comma-separated
+  strategy        String?
+  mainMessage     String?
+  targetAudience  String?
+  duration        String?
+  postingSchedule String?
+  contentPillars  String?
+  packageData     String         // Full structured campaign JSON payload
+  status          String         @default("DRAFT") // DRAFT, UNDER_REVIEW, APPROVED, PUBLISHED
+  isAiGenerated   Boolean        @default(true)
+  aiProvider      String         @default("ollama")
+  modelUsed       String?
+  contentItems    ContentItem[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model ContentItem {
+  id          String           @id @default(cuid())
+  title       String
+  caption     String
+  status      String           @default("DRAFT") // DRAFT, UNDER_REVIEW, APPROVED, PUBLISHED
+  platform    String           // INSTAGRAM, FACEBOOK, LINKEDIN, X, YOUTUBE, STORIES, REEL, CAMPUS_TV, POSTER, MULTI
+  department  String           @default("General Communications")
+  campus      String           @default("Tapesia Campus") // Tapesia Campus, Azara Campus, Kharguli Campus, All Campuses
+  tags        String           @default("")
+  notes       String?
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  eventId     String?
+  event       CalendarEvent?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  campaignId  String?
+  campaign    ContentCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  metadata    String?          // JSON for platform-specific details (hook, visual direction, scripts, etc.)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model MediaItem {
+  id        String   @id @default(cuid())
+  filename  String
+  filePath  String
+  fileType  String
+  fileSize  Int
+  createdAt DateTime @default(now())
+}
+
+model KnowledgeDocument {
+  id        String   @id @default(cuid())
+  title     String
+  category  String   // Academics, Admissions, Campus Life, Events, Branding
+  content   String
+  tags      String?  @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AppSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
