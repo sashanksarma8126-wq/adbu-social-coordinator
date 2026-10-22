@@ -20,8 +20,15 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [draftsCount, calendarEventsCount, publishedCount, knowledgeCount, recentPosts, upcomingEvents] =
-    await Promise.all([
+  let draftsCount = 0;
+  let calendarEventsCount = 0;
+  let publishedCount = 0;
+  let knowledgeCount = 0;
+  let recentPosts: any[] = [];
+  let upcomingEvents: any[] = [];
+
+  try {
+    const results = await Promise.all([
       prisma.contentItem.count({ where: { status: "DRAFT" } }),
       prisma.calendarEvent.count(),
       prisma.contentItem.count({ where: { status: "PUBLISHED" } }),
@@ -37,6 +44,16 @@ export default async function DashboardPage() {
         orderBy: { date: "asc" },
       }),
     ]);
+
+    draftsCount = results[0];
+    calendarEventsCount = results[1];
+    publishedCount = results[2];
+    knowledgeCount = results[3];
+    recentPosts = results[4];
+    upcomingEvents = results[5];
+  } catch (err) {
+    console.warn("Database connection notice on initial page load:", err);
+  }
 
   const stats = [
     {
